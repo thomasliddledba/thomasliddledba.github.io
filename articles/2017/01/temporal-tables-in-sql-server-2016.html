@@ -1,0 +1,204 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<title>Temporal Tables in SQL Server 2016 - thomasliddledba.com</title>
+<meta name="keywords" content="thomasliddledba temporal tables,thomasliddledba.com temporal tables" />
+<meta name="description" content="Demonstration on how to use Temporal Tables in SQL Server 2016" />
+<link href="../../../default.css" rel="stylesheet" type="text/css" media="screen" />
+<link rel="shortcut icon" href="../../../images/favicon_thomasliddledba_com.png" type="image/png" />
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-89244115-1', 'auto');
+  ga('send', 'pageview');
+
+</script>
+</head>
+<body>
+<!-- start header -->
+<div id="logo">
+	<h1><a href="../../../index.html">thomasliddledba.com</a></h1>
+	<p>Your MSSQL Database Platform Resource</p>
+</div>
+<div id="menu">
+	<ul>
+	<ul>
+		<li><a href="../../../index.html">Home</a></li>
+		<li><a href="../../../articles.html">Articles</a></li>
+		<li><a href="../../../videos.html">Videos</a></li>
+		<li><a href="../../../10-minute-dba.html">10 Minute DBA</a></li>
+	</ul>
+	</ul>
+</div>
+<!-- end header -->
+<!-- start page -->
+<div id="page">
+	<div id="page-bg">
+		<div id="latest-post"> <img src="../../../images/websiteimg.png" alt="" width="140" height="165" class="right" />
+			<h1>Temporal Tables in SQL Server 2016</h1>
+			<p>
+Temporal Table is a new type of user defined table introduced in SQL Server 2016. Temporal table are tables that SQL Server automatically tracks the full history of the data changes into a separate history table. This gives you the ability to know what your data was at any point in time.
+<br />
+<br />
+Temporal Tables provide the built-in support for tracking the full history of the data and also provides querying construct FOR SYSTEM_TIME to query historic data at any point in time or for a period of time.  Temporal Table in SQL Server can be used in a number of different senerios.  I can think of auditing or slow changing dimensions.  What I really see the benefit of Temporal Tables is the replacement of that table/trigger solution that all DBA's have come up with in the past.  :)
+<p />
+<strong>Considerations:</strong>
+<ol>
+<li>Table needs to have a Primary Key. If table does not have the primary key it will raise an error.</li>
+<li>Table needs to have two DATETIME2 columns representing the start and end of the row's validity period.</li>
+<li>Start/End columns should be NOT NULL</li>
+<ol>
+
+			</p>
+		</div>
+		<!-- start content -->
+		<div id="content"><div class="inner_copy"></div>
+			<div class="post">
+				<h2 class="title">Step 1 - Create the Temporal Table</h2>
+In this step we will create the Benefits table in the HumanRecoures schema and turn on versioning for a history table.
+What is important to remember is that the datetime2 data type must be used when creating temporal tables.
+				<div class="entry">
+<table border=0 id="codetable">
+<tr>
+<td>
+					<pre>
+CREATE TABLE HUMANRESOURCES.BENEFITS 
+(  
+  ENTITYID INT NOT NULL PRIMARY KEY CLUSTERED,
+  PROVIDERNAME NVARCHAR(100) NOT NULL, 
+  EMPLOYEEID INT NOT NULL,
+  MEDICALELECTION VARCHAR(100) NOT NULL,
+  DENTALELECTION VARCHAR(100) NOT NULL,
+  VISIONELECTION VARCHAR(100) NOT NULL,
+  ELECTIONYEAR VARCHAR(4) NOT NULL,
+  STARTTIME DATETIME2 GENERATED ALWAYS AS ROW START
+            NOT NULL,
+  ENDTIME   DATETIME2 GENERATED ALWAYS AS ROW END
+            NOT NULL,
+  PERIOD FOR SYSTEM_TIME (STARTTIME, ENDTIME)   
+) 
+WITH(
+	SYSTEM_VERSIONING= ON 
+	(HISTORY_TABLE=HUMANRESOURCES.BENEFITSHISTORY))
+GO
+					<pre>
+</tr></td></table>
+<table border=0>
+<tr>
+<td><img src="../../../images/TemporalTablesStep1.png"></td>
+</tr></table>
+
+					<br />
+					</p>
+<h2 class="title">Step 2 - Insert Sample Data</h2>
+In this step, we are going to insert some sample data.  The sample data is the current employees elections for the year 2017.  Employee number 2, only has benefits for himself in 2017.
+<table border=0 id="codetable">
+<tr>
+<td>
+					<pre>
+INSERT INTO [HUMANRESOURCES].[BENEFITS] ([ENTITYID]
+	,[PROVIDERNAME],[EMPLOYEEID],[MEDICALELECTION]
+	,[DENTALELECTION],[VISIONELECTION],[ELECTIONYEAR])
+    SELECT 1,'HEALTHCARE.GOV',1,'EMPLOYEE+FAMILY'
+		,'EMPLOYEE+FAMILY','EMPLOYEE+FAMILY','2017'
+GO
+INSERT INTO [HUMANRESOURCES].[BENEFITS] ([ENTITYID]
+	,[PROVIDERNAME],[EMPLOYEEID],[MEDICALELECTION]
+	,[DENTALELECTION],[VISIONELECTION],[ELECTIONYEAR])
+    SELECT 2,'HEALTHCARE.GOV',2,'EMPLOYEE'
+	,'EMPLOYEE','EMPLOYEE','2017'
+GO
+INSERT INTO [HUMANRESOURCES].[BENEFITS] ([ENTITYID]
+	,[PROVIDERNAME],[EMPLOYEEID],[MEDICALELECTION]
+	,[DENTALELECTION],[VISIONELECTION],[ELECTIONYEAR])
+    SELECT 3,'HEALTHCARE.GOV',3,'EMPLOYEE+FAMILY'
+	,'EMPLOYEE+FAMILY','EMPLOYEE+FAMILY','2017'
+GO
+
+SELECT * FROM [HUMANRESOURCES].[BENEFITS]
+					<pre>
+</tr></td></table>
+
+<table border=0>
+<tr>
+<td><img src="../../../images/TemporalTablesStep2.png"></td>
+</tr></table>
+
+
+<h2 class="title">Step 3 - Update Data in Benefits Table</h2>
+In this step, our employee #2 was married in 2017 and will change their benefits to Employee+Spouse.  This will create a record in the BenefitsHistory table that will be the vaild history record for this row.
+<p />
+After the update, a record is inserted in the BenefitsHistory table.  You will notice the EndTime of the record in the BenefitsHistory table matches the Startime of the Benefits table.
+<table border=0 id="codetable">
+<tr>
+<td>
+					<pre>
+UPDATE [HUMANRESOURCES].[BENEFITS]
+    SET ELECTIONYEAR = '2017'
+        ,MEDICALELECTION = 'EMPLOYEE+SPOUSE'
+        ,DENTALELECTION = 'EMPLOYEE+SPOUSE'
+        ,VISIONELECTION = 'EMPLOYEE+SPOUSE'
+WHERE EMPLOYEEID = 2
+GO
+
+GO
+SELECT * FROM [HUMANRESOURCES].[BENEFITS]
+GO
+SELECT * FROM [HUMANRESOURCES].[BENEFITSHISTORY]
+GO
+					<pre>
+</tr></td></table>
+<table border=0>
+<tr>
+<td><img src="../../../images/TemporalTablesStep3.png" width="633" height="180"></td>
+</tr></table>
+<h2 class="title">Step 4 - Update Data in Benefits Table, AGAIN!</h2>
+To continue with our example, our employee #2 has had a child and now we need to update the election to Employee + Family.  This will insert a record into the history table.
+<p />
+Again, notice the Endtime will equal the StartTime of the active record.
+<table border=0 id="codetable">
+<tr>
+<td>
+					<pre>
+UPDATE [HUMANRESOURCES].[BENEFITS]
+    SET ELECTIONYEAR = '2017'
+        ,MEDICALELECTION = 'EMPLOYEE+FAMILY'
+        ,DENTALELECTION = 'EMPLOYEE+FAMILY'
+        ,VISIONELECTION = 'EMPLOYEE+FAMILY'
+WHERE EMPLOYEEID = 2
+GO
+SELECT * FROM [HUMANRESOURCES].[BENEFITS]
+GO
+SELECT * FROM [HUMANRESOURCES].[BENEFITSHISTORY]
+GO
+					<pre>
+</tr></td></table>
+<table border=0>
+<tr>
+<td><img src="../../../images/TemporalTablesStep4.png" width="633" height="180"></td>
+</tr></table>
+
+					<br />
+					</p>
+				</div>
+			</div>
+		</div>
+		<!-- end content -->
+		<!-- start sidebar -->
+		<div id="sidebar">
+			<!-- Advertisment -->
+		</div>
+		<!-- end sidebar -->
+		<div style="clear:both;">&nbsp;</div>
+	</div>
+</div>
+<!-- end page -->
+<div id="footer">
+	<div class="fleft"><p>Copyright - All rights reserved.  thomasliddledba.com</p></div>
+</div>
+</body>
+</html>

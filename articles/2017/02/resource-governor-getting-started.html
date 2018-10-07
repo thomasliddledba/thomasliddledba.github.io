@@ -1,0 +1,280 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" prefix="og: http://ogp.me/ns#">
+<head>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<title>Resource Governor - Getting Started</title>
+<meta name="keywords" content="" />
+<meta name="description" content="Demonstration on how to use SQL Server Resource Governor" />
+  <meta property="og:title" content="Resource Governor - Getting Started" />
+  <meta property="og:description" content="Demonstration on how to use SQL Server Resource Governor" />
+  <meta property="og:url" content="http://www.thomasliddledba.com/articles/2017/02/resource-governor-getting-started.html" />
+  <meta property="og:image" content="http://www.thomasliddledba.com/images/resource-governor.png" />
+<link href="../../../default.css" rel="stylesheet" type="text/css" media="screen" />
+<link rel="shortcut icon" href="../../../images/favicon_thomasliddledba_com.png" type="image/png" />
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-89244115-1', 'auto');
+  ga('send', 'pageview');
+
+</script>
+</head>
+<body>
+<!-- start header -->
+<div id="logo">
+	<h1><a href="../../../index.html">thomasliddledba.com</a></h1>
+	<p>Your MSSQL Database Platform Resource</p>
+</div>
+<div id="menu">
+	<ul>
+	<ul>
+		<li><a href="../../../index.html">Home</a></li>
+		<li><a href="../../../articles.html">Articles</a></li>
+		<li><a href="../../../videos.html">Videos</a></li>
+		<li><a href="../../../10-minute-dba.html">10 Minute DBA</a></li>
+	</ul>
+	</ul>
+</div>
+<!-- end header -->
+<!-- start page -->
+<div id="page">
+	<div id="page-bg">
+		<div id="latest-post"> <img src="../../../images/websiteimg.png" alt="" width="140" height="165" class="right" />
+			<h1>Resource Governor - Getting Started</h1>
+<!-- Start LinkedIn Button -->
+<script src="//platform.linkedin.com/in.js" type="text/javascript"> lang: en_US</script>
+<script type="IN/Share" data-counter="right"></script> 
+<!-- End LinkedIn Button -->
+<!-- Start Twitter Button -->
+<a href="https://twitter.com/share" class="twitter-share-button" data-text="Demonstration on how to use SQL Server Resource Governor" data-url="http://www.thomasliddledba.com/articles/2017/02/resource-governor-getting-started.html" data-via="thomasliddledba" data-show-count="false">Tweet</a>
+<script async src="//platform.twitter.com/widgets.js" charset="utf-8"></script>
+<!-- End Twitter Button -->
+			<p>
+<h2>Resource Governor Overview</h2>
+Resource Governor allows you to set limits on specific limits on incoming requests to better manage SQL Server workloads.  This is extremely helpful in shared environments that host many databases and you, as a Database Administrator, need to limit resources like CPU, IO, or Memory.  Limiting resources can help with support SLA's and performance, isolate problem queries or resource intense database operations, or resource tracking to provide a chargeback model.
+<p />
+There are a few things to consider when working with Resource Governor.
+<ul>
+<li>Only available for the Database Engine</li>
+<li>Short duration queries or operations are not ideal for Resource Governor.  At times, these may not generate enough resources based on their duration.</li>
+</ul>
+<p />
+<h2>Resource Governor Terminology</h2>
+<ul>
+<li><strong>Resource Pool</strong> - Is a physical resource on the server such as CPU, Memory, or I/O.  There are two resource pools created by default with SQL Server and can not be modified.
+<ul>
+<li>default</li>
+<li>internal</li>
+</ul>
+<li><strong>Workload groups</strong> - defines the policies for the session</li>
+<li><strong>Classification</strong> - a function, that exists in the master database, and assigns incoming resources workload groups.</li>
+</li>
+
+</ul>
+<p />
+<h2>Watch Resource Governor in Action</h2>
+Watch this demonstration on how to step SQL Server Resource Governor.  View how setting Resource limits can reduce system resources.
+<p />
+<center><a href="https://youtu.be/G_y_TW1TeE0"><img src="../../../images/youtube_logo.png"></a></center>
+<p />
+
+			</p>
+		</div>
+		<!-- start content -->
+		<div id="contentnosidebar"><div class="inner_copy"></div>
+			<div class="post">
+<H2>Resource Governor Demo</h2>
+<hr>
+In this demonstration we will walk through creating a resource pool and define CPU and MEMORY limits, create a workload group, and finally a UDF classifier.  The classifier will be used to map a SQL Login to the correct workload group so when the user logs in the users will work within the limits defined in the resource pool.
+<p />
+				<h2 class="title">Step 1 - Create our ETLUser Login</h2>
+We first need to create a login that will perform our ETL process.
+<br />
+				<div class="entry">
+<table border=0 id="codetable">
+<tr>
+<td>
+					<pre>
+use [master]
+go
+create login [sg_etl_usr] with password = 'N3wP@ssw0rd$'
+go
+					<pre>
+</tr></td></table>
+
+					</p>
+<h2 class="title">Step 2 - Create our Resource Pool</h2>
+We need to first, create a resource pool and specify our resources for this pool.
+<table border=0 id="codetable">
+<tr>
+<td>
+					<pre>
+create resource pool etl_rs
+with
+( min_cpu_percent=0,
+max_cpu_percent=5,
+min_memory_percent=0,
+max_memory_percent=5)
+go
+					<pre>
+</tr></td></table>
+
+
+<p />
+<h2 class="title">Step 3 - Create a Workload Group</h2>
+Here we are going to create a workload group that will map to our resource pool.
+<table border=0 id="codetable">
+<tr>
+<td>
+					<pre>
+create workload group etl_grp
+using etl_rs ;
+go
+					<pre>
+</tr></td></table>
+<p />
+<h2 class="title">Step 4 - Create the User-Defined Classifier</h2>
+In this step we will create a user-defined classifier that will map our login to the resource group when the user 'sq_etl_usr' logs in to the server.
+<table border=0 id="codetable">
+<tr>
+<td>
+					<pre>
+use [master]
+go
+create function dbo.udf_rs_classifier()
+returns sysname
+with schemabinding
+as
+begin
+declare @wrkgrp as sysname
+if(suser_name() = 'sg_etl_usr')
+set @wrkgrp = 'etl_grp'
+else
+set @wrkgrp = 'default'
+return @wrkgrp
+end
+go
+					<pre>
+</tr></td></table>
+					</p>
+<h2 class="title">Step 5 - Enable Resource Governor</h2>
+By default, Resource Governor is disabled.  You will need to enable it for it to take affect.  This does not require a restart of SQL Server to do so.
+<table border=0 id="codetable">
+<tr>
+<td>
+					<pre>
+alter resource governor
+with (classifier_function=[dbo].[udf_rs_classifier]);
+go
+alter resource governor reconfigure
+go
+<pre>
+</tr></td></table>
+					</p>
+<h2 class="title">Step 6 - Test our classifier function</h2>
+Lastly, we need to test to see if our classifier function is working properly.  You will need to open another query window and login with the user 'sg_etl_usr' you created we Step 1.  
+<br />
+In another query window, login with sysadmin credentials and execute the T-SQL code below.  This code will show you that the login 'sg_etl_usr' is logged in with the workload group we created.
+<table border=0 id="codetable">
+<tr>
+<td>
+					<pre>
+use [master]
+go
+select    
+	s.[session_id] as 'spid',
+	s.[host_name] as 'hostname',
+	s.[program_name] as 'applicationname',
+	s.[nt_user_name] as 'ntusername',
+	s.[login_name] as 'sqlloginname',
+	rswg.[name] as 'groupassigned',
+	rsrp.[name] as 'poolassigned'
+from sys.dm_exec_sessions s
+        inner join sys.dm_resource_governor_workload_groups rswg
+                on s.group_id = rswg.group_id
+        inner join sys.dm_resource_governor_resource_pools rsrp
+                on rswg.pool_id = rsrp.pool_id
+where s.login_name = 'sg_etl_usr'
+<pre>
+</tr></td></table>
+<p />
+<table border="0">
+<tr>
+<td><img src="../../../images/rs-loginresults.png"></td>
+</tr>
+<tr>
+<td><strong>Figure 1 - Query Results</strong></td>
+</tr></table>
+<p />
+<h2>Conclusion</h2>
+In this article we educated ourselves on what Resource Governor is, how to create resource pools, workload groups, and classification functions to map it altogether.  We also demonstrated logging in with an account that uses our resource pool.  Resource Governor is a powerful feature with SQL Server that can be leveraged to manage CPU, Memory, and I/O operations on your database.
+
+					<br />
+					</p>
+
+
+				</div>
+			</div>
+		</div>
+		<!-- end content -->
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+		<!-- start sidebar -->
+		<div id="sidebar">
+			<!-- Advertisment -->
+		</div>
+		<!-- end sidebar -->
+		<div style="clear:both;">&nbsp;</div>
+	</div>
+</div>
+<!-- end page -->
+<div id="footer">
+	<div class="fleft"><p>Copyright - All rights reserved.  thomasliddledba.com</p></div>
+</div>
+</body>
+</html>

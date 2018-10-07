@@ -1,0 +1,42 @@
+## EXPIRES CACHING ##
+<IfModule mod_expires.c>
+ExpiresActive On
+ExpiresByType image/jpg "access 1 month"
+ExpiresByType image/jpeg "access 1 month"
+ExpiresByType image/gif "access 1 month"
+ExpiresByType image/png "access 1 month"
+ExpiresByType text/css "access 1 month"
+ExpiresByType text/html "access 5 minutes"
+ExpiresByType application/pdf "access 1 month"
+ExpiresByType text/x-javascript "access 1 month"
+ExpiresByType application/x-shockwave-flash "access 1 month"
+ExpiresByType image/x-icon "access 1 month"
+ExpiresDefault "access 1 month"
+</IfModule>
+## EXPIRES CACHING ##
+
+## ERROR DOCUMENT ##
+ErrorDocument 401 /errmsg/index.html
+ErrorDocument 402 /errmsg/index.html
+ErrorDocument 403 /errmsg/index.html
+ErrorDocument 404 /errmsg/index.html
+ErrorDocument 405 /errmsg/index.html
+ErrorDocument 406 /errmsg/index.html
+ErrorDocument 407 /errmsg/index.html
+ErrorDocument 408 /eerrmsg/index.html
+ErrorDocument 409 /errmsg/index.html
+ErrorDocument 410 /errmsg/index.html
+ErrorDocument 411 /errmsg/index.html
+ErrorDocument 412 /errmsg/index.html
+ErrorDocument 413 /errmsg/index.html
+ErrorDocument 414 /errmsg/index.html
+ErrorDocument 415 /errmsg/index.html
+ErrorDocument 416 /errmsg/index.html
+ErrorDocument 417 /eerrmsg/index.html
+ErrorDocument 500 /errmsg/index.html
+ErrorDocument 501 /errmsg/index.html
+ErrorDocument 502 /errmsg/index.html
+ErrorDocument 503 /errmsg/index.html
+ErrorDocument 504 /errmsg/index.html
+ErrorDocument 505 /errmsg/index.html
+## ERROR DOCUMENT ##

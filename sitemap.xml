@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset
+      xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9
+            http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">
+<url>
+  <loc>http://www.thomasliddledba.com/articles.html</loc>
+</url>
+<url>
+  <loc>http://www.thomasliddledba.com/10-minute-dba.html</loc>
+</url>
+<url>
+  <loc>http://www.thomasliddledba.com/videos.html</loc>
+</url>
+<url>
+  <loc>http://www.thomasliddledba.com/articles/2016/12/index.html</loc>
+</url>
+<url>
+  <loc>http://www.thomasliddledba.com/articles/2017/01/index.html</loc>
+</url>
+<url>
+  <loc>http://www.thomasliddledba.com/articles/2017/02/index.html</loc>
+</url>
+<url>
+  <loc>http://www.thomasliddledba.com/articles/2017/02/resource-governor-getting-started.html</loc>
+</url>
+<url>
+  <loc>http://www.thomasliddledba.com/articles/2016/12/merge-tsql-with-sql-server.html</loc>
+</url>
+<url>
+  <loc>http://www.thomasliddledba.com/articles/2017/01/create-or-alter-statement-in-sql-server-2016-sp1.html</loc>
+</url>
+<url>
+  <loc>http://www.thomasliddledba.com/articles/2017/01/temporal-tables-in-sql-server-2016-more-control.html</loc>
+</url>
+<url>
+  <loc>http://www.thomasliddledba.com/articles/2017/01/temporal-tables-in-sql-server-2016.html</loc>
+</url>
+<url>
+  <loc>http://www.thomasliddledba.com/articles/2016/12/sql-server-dynamic-data-masking-ddm.html</loc>
+</url>
+<url>
+  <loc>http://www.thomasliddledba.com/articles/2017/01/sql-server-end-of-support-2017-product-list.html</loc>
+</url>
+<url>
+  <loc>http://www.thomasliddledba.com/articles/2017/01/drop-if-exists-statement-in-sql-server-2016.html</loc>
+</url>
+<url>
+  <loc>http://www.thomasliddledba.com/articles/2017/01/in-memory-oltp-part-1.html</loc>
+</url>
+<url>
+  <loc>http://www.thomasliddledba.com/articles/2017/01/create-and-connect-to-a-azure-sql-database.html</loc>
+</url>
+</urlset>

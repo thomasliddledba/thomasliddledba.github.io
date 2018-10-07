@@ -1,0 +1,284 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" prefix="og: http://ogp.me/ns#">
+<head>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<meta http-equiv="content-language" content="en-us">
+<title>Create and Connect to a Microsoft Azure SQL Database - thomasliddledba.com</title>
+<meta name="keywords" content="" />
+<meta name="description" content="Demonstration on how to create and connect to a Microsoft Azure SQL Database with Microsoft Management Studio (SSMS) and Powershell" />
+  <meta property="og:title" content="Create and Connect to a Microsoft Azure SQL Databases - thomasliddledba.com" />
+  <meta property="og:description" content="Demonstration on how to create and connect to a Microsoft Azure SQL Database with Microsoft Management Studio (SSMS) and Powershell" />
+  <meta property="og:url" content="http://www.thomasliddledba.com/articles/2017/01/create-and-connect-to-a-azure-sql-database.html" />
+  <meta property="og:image" content="http://www.thomasliddledba.com/images/azuresmalllogo.png" />
+<link href="../../../default.css" rel="stylesheet" type="text/css" media="screen" />
+<link rel="shortcut icon" href="../../../images/favicon_thomasliddledba_com.png" type="image/png" />
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-89244115-1', 'auto');
+  ga('send', 'pageview');
+
+</script>
+</head>
+<body>
+<!-- start header -->
+<div id="logo">
+	<h1><a href="../../../index.html">thomasliddledba.com</a></h1>
+	<p>Your MSSQL Database Platform Resource</p>
+</div>
+<div id="menu">
+	<ul>
+	<ul>
+		<li><a href="../../../index.html">Home</a></li>
+		<li><a href="../../../articles.html">Articles</a></li>
+		<li><a href="../../../videos.html">Videos</a></li>
+		<li><a href="../../../10-minute-dba.html">10 Minute DBA</a></li>
+	</ul>
+	</ul>
+</div>
+<!-- end header -->
+<!-- start page -->
+<div id="page">
+	<div id="page-bg">
+		<div id="latest-post"> <img src="../../../images/websiteimg.png" alt="" width="140" height="165" class="right" />
+			<h2>Create and Connect to a Azure SQL Database with SQL Server Management Studio and Powershell</h2>
+<script src="//platform.linkedin.com/in.js" type="text/javascript"> lang: en_US</script>
+<script type="IN/Share" data-counter="right"></script> | 
+<a href="https://twitter.com/share" class="twitter-share-button" data-text="Demo on how to create/connect to a Microsoft Azure SQL Database with SSMS and Powershell" data-url="http://www.thomasliddledba.com/articles/2017/01/create-and-connect-to-a-azure-sql-database.html" data-via="thomasliddledba" data-show-count="false">Tweet</a><script async src="//platform.twitter.com/widgets.js" charset="utf-8"></script>
+			<p>
+Today we are going to talk about creating a new Microsoft Azure SQL Database and use SQL Server Management Studio and Powershell to connect and work with it.
+First, you will need to sign up for the Free Trial with a Microsoft Account.  Go to <a target="_blank" href="http://azure.microsoft.com">http://azure.microsoft.com</a> and sign up for a free 30-day trial.  Once you sign up go to the Azure Portal (<a target="_blank" href="http://portal.azure.com">http://portal.azure.com</a>) and sign in.
+<p />
+<h3>Overview</h3>
+Microsoft Azure SQL Database is a cloud DAAS (Database As A Service) that can be used to build SQL Server databases easier and on-demand.  Developers can leverage the cloud offering to focus on development of their new applications without having to wait days for a DBA to create a database.  Database Administrators can use it for high availability of a database, use the service to backup databases, or scale quickly based on demand.
+<p />
+Microsoft Azure SQL Database uses the codebase from the newest SQL Server 2016 Product Suite for the database engine, however, there are some <a target="_blank" href="https://docs.microsoft.com/en-us/azure/sql-database/sql-database-transact-sql-information">limitations</a> on what you can do in Microsoft Azure SQL.  The table below highlights a few of those limitations. 
+<p />
+<table border=0>
+<tr>
+<td>Global Tempoary Tables</td>
+</tr>
+<tr>
+<td>SQL Server Agent Functions/Procedures</td>
+</tr>
+<tr>
+<td>SQL Server Logins (Database Scope Credentials are supported)</td>
+</tr>
+<tr>
+<td>sp_addmessage</td>
+</tr>
+<tr>
+<td>SQL Server Auditing (Database Auditing Supported)</td>
+</tr>
+<tr>
+<td>SQL Server Trace</td>
+</tr>
+<tr>
+<td>Login Triggers or Server-scope Triggers</td>
+</tr>
+<tr>
+<td>USE statement</td>
+</tr>
+<tr>
+</tr>
+</table>
+<p />
+<h3>Use Cases</h3>
+There are a number of use cases that can be adopted.
+<ul>
+<li>Scale a production application based on increase demand</li>
+<li>Quick development and test environments that will speed up development and QA</li>
+<li>Ability to out-source database management and TCO</li>
+<li>Backup and Recovery</li>
+</ul>
+
+<h3>Features</h3>
+Instead of writing out the features that are available in Microsoft Azure SQL I will provide a link to the Microsoft Docs with that information.  The feature set is changing daily and it a good idea to check with the docs on a daily or weekly basis.
+<p />
+<a target="_blank" href="https://docs.microsoft.com/en-us/azure/sql-database/sql-database-features">Microsoft Docs - Azure SQL Database Features</a>
+
+<p />
+			</p>
+		</div>
+		<!-- start content -->
+		<div id="contentnosidebar"><div class="inner_copy"></div>
+			<div class="post">
+<hr />
+				<h2 class="title">Create an SQL Database in Azure</h2>
+You will need to create a Azure account and Microsoft is offering a Free Trial at the date of this article.  Once you have the account and are in the <a target="_blank" href="http://portal.azure.com">Azure Portal</a>, to create a database, click on the <strong>SQL Database</strong> icon.
+<p />
+Next, click on the plus icon in the Azure Database Screen.
+<p />
+You will be presented with various options to create a new Azure SQL Database.  We will walk though each one.
+<ul>
+<li>Database Name = AdventureWorks2016CTP3</li>
+<li>Subscription = This will be the free trial you signed up for.  This is $200 and good for 30 days</li>
+<li>Resource Group = This is the resource group that is created with your database</li>
+<li>Server = When you create an Azure SQL Database it needs to be assigned to a server.  You can create one from the portal or choose an existing one.  We will create a new one.  You will need to choose the Server Name, User Name and Password, Location.</li>
+<li>Want to use SQL Elastic Pool? = Allow you to budget your resources while providing resources based on demand</li>
+<li>Pricing tier = You have a number of different tiers of pricing available.  For this demo, we will choose the basic.</li> 
+<li>Collation = Standard SQL Server Collation</li>
+</ul>
+				<div class="entry">
+<table border=0>
+<tr>
+<td><img src="../../../images/azure-newdatabasescreen.png"></td>
+</tr></table>
+<p />
+After your database is deployed you will see the new database in your list of Microsoft Azure SQL Databases.  Click on the database to see the properties.
+<table border=0>
+<tr>
+<td><img src="../../../images/azure-newdatabaseproperties.png"></td>
+</tr></table>
+<p />
+From here you can perform a number of different actions.
+<ul>
+<li>Setup Dynamic Data Masking</li>
+<li>Transparent Data Encryption</li>
+<li>Geo-Replication</li>
+<li>Get Connection String Information</li>
+<li>Restore/Export Database</li>
+</ul>
+
+					<br />
+					</p>
+<h2 class="title">Connect to Azure SQL Database with SQL Server Management Studio (SSMS)</h2>
+You can download the <a target="_blank" href="https://msdn.microsoft.com/en-us/library/mt238290.aspx">Microsoft SQL Server Management Studio software from Microsoft for free</a>.  In this demonstration, we will be using a Release Candidate 17.0.  To connect to Azure SQL Database with Microsoft SQL Server Management Studio you will need the server name and the user name and password using SQL Authentication.  The screenshot is an example of what you will need to type in to connect.
+<br />
+If you are not already signed in, you may be asked, when you click Connect, to sign into your Microsoft Account.  You will need to enter the same credentials you use to log into the Microsoft Azure Portal.  You will also be asked to add a New Firewall Rule with your public IP Address listed.  Click OK.
+<table border=0>
+<tr>
+<td><img src="../../../images/ssms-connecttoazuresqldatabase.png" />
+</tr></table>
+<strong>Figure 1 - Connection Information to connect to Azure SQL Database</strong>
+<p />
+<table border=0>
+<tr>
+<td><img src="../../../images/ssms-newfirewallrule.png" />
+</tr></table>
+<strong>Figure 2 - New Firewall Rule Screen</strong>
+<p />
+<table border=0>
+<tr>
+<td><img src="../../../images/ssms-objectexplorer.png" />
+</tr></table>
+<strong>Figure 3 - Example of Object Explorer</strong>
+<p />
+<table border=0>
+<tr>
+<td><img src="../../../images/ssms-queryazsuredatabase.png" />
+</tr></table>
+<strong>Figure 4 - Example Query of Azure SQL Database</strong>
+<p />
+<h2 class="title">Connect to Azure SQL Database with Powershell</h2>
+You will need to install the Azure Powershell Modules in order to connect to Azure via Powershell.  You can find the <a target="_blank" href="https://github.com/Azure/azure-powershell/releases/tag/v3.4.0-January2017">MSI file here on Github</a>.  Once you have the installation completed, perform the following commands to add your Azure Account.
+<table border=0 id="codetable">
+<tr>
+<td>
+<pre>
+PS C:\>Add-AzureAccount
+PS C:\>Disable-AzureDataCollection
+<pre>
+</tr></td></table>
+<table border=0>
+<tr>
+<td><img src="../../../images/powershell-addazureaccount.png" />
+</tr></table>
+<strong>Figure 1 - Add Azure Account</strong>
+<p />
+To view your list of Azure Databases with your subscription, you can type in the following command in PowerShell.
+<table border=0 id="codetable">
+<tr>
+<td>
+<pre>
+PS C:\>Get-AzureSqlDatabaseServer
+<pre>
+</tr></td></table>
+<table border=0>
+<tr>
+<td><img src="../../../images/powershell-listazuredatabases.png" />
+</tr></table>
+<strong>Figure 2 - List Azure Databases</strong>
+<p />
+To query a table in SQL Azure via Powershell, run the following <a target="_blank" href="https://msdn.microsoft.com/en-us/library/cc281720.aspx">Invoke-SQLCmd command</a>.
+<table border=0 id="codetable">
+<tr>
+<td>
+<pre>
+PS SQLSERVER:\> Invoke-Sqlcmd -Query "SELECT * From dbo.azure_example" 
+-ServerInstance "adventureworks2016ctp3.database.windows.net" 
+-UserName svcAdWorks -Password "enter password w/double quotes" -Database "adventureworks2016ctp3"
+<pre>
+</tr></td></table>
+<table border=0>
+<tr>
+<td><img src="../../../images/powershell-queryazuredatabasetable.png" />
+</tr></table>
+<strong>Figure 3 - Query an Azure Database with Powershell</strong>
+<p />
+
+				</div>
+			</div>
+		</div>
+		<!-- end content -->
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+		<!-- start sidebar -->
+		<div id="sidebar">
+			<!-- Advertisment -->
+		</div>
+		<!-- end sidebar -->
+		<div style="clear:both;">&nbsp;</div>
+	</div>
+</div>
+<!-- end page -->
+<div id="footer">
+	<div class="fleft"><p>Copyright - All rights reserved.  thomasliddledba.com</p></div>
+</div>
+</body>
+</html>

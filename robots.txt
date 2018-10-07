@@ -1,0 +1,7 @@
+User-agent: *
+Disallow: /images/
+Disallow: /scripts/
+Disallow: /test_index.html
+Disallow: /errmsg/
+Disallow: /subscribe_thankyou.html
+Disallow: /subscribers.php

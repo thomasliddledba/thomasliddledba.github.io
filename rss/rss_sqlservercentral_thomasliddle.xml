@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0">
+  <channel>
+    <generator>RSS Builder by B!Soft</generator>
+    <title>Thomas Liddle SQLServerCentral.com Blog</title>
+    <link>http://www.sqlservercentral.com/Authors/Articles/Thomas_Liddle/1982114/</link>
+    <description>Collection of articles on SQLServerCentral.com by author Thomas Liddle</description>
+    <language>en-us</language>
+    <managingEditor>tliddle30@gmail.com</managingEditor>
+    <webMaster>tliddle30@gmail.com</webMaster>
+    <image>
+      <title>Thomas Liddle SQLServerCentral.com Blog</title>
+      <link>http://www.sqlservercentral.com/Authors/Articles/Thomas_Liddle/1982114/</link>
+      <url>http://www.sqlservercentral.com/Resources/Images/sqlservercentral_logo.gif</url>
+    </image>
+    <item>
+      <title>Put your Database under Source Control</title>
+      <pubDate>Wed, 18 Jan 2017 08:00:00 -0500</pubDate>
+      <link>http://www.sqlservercentral.com/articles/DB+Source+Control/151587/</link>
+      <author>tliddle30@gmail.com</author>
+      <comments>https://www.sqlservercentral.com/Forums/1851611/Put-your-Database-under-Source-Control</comments>
+      <category>db source control</category>
+      <description><![CDATA[Software developers live by version control. Trunks, branches, and features are ingrained in their DNA. For database developers and database administrators it has always been tough implementing version control on a database because database objects are not files that can be modified. Redgate tackled this issue with SQL Source Control by integrating their software in SQL Server Management Studio as a plugin.]]></description>
+    </item>
+    <item>
+      <title>Changing Linked Server Passwords</title>
+      <pubDate>Thu, 26 Jan 2017 08:00:00 -0500</pubDate>
+      <link>http://www.sqlservercentral.com/articles/Linked+Server/151466/</link>
+      <author>tliddle30@gmail.com</author>
+      <comments>https://www.sqlservercentral.com/Forums/1853875/Changing-Linked-Server-Passwords</comments>
+      <category>linked server</category>
+      <description><![CDATA[A linked server in SQL Server allows users to query remote heterogenous servers.  These servers can be database servers like SQL Server, Oracle, MySQL, etc.  At times, administrators of those servers might have to change the password on a mapped login or it could be changed without your knowledge. ]]></description>
+    </item>
+  </channel>
+</rss>

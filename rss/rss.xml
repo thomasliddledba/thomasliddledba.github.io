@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0">
+  <channel>
+    <generator>RSS Builder by B!Soft</generator>
+    <title>Thomas Liddle DBA Web Site</title>
+    <link>http://www.thomasliddledba.com</link>
+    <description>thomasliddledba.com is a resource for a collection of articles, videos, scripts, and resources that I want to share with SQL Server Database Administrators and developers.</description>
+    <language>en-us</language>
+    <managingEditor>tliddle30@gmail.com</managingEditor>
+    <webMaster>tliddle30@gmail.com</webMaster>
+    <image>
+      <title>Thomas Liddle DBA Web Site</title>
+      <link>http://www.thomasliddledba.com</link>
+      <url>http://www.thomasliddledba.com/images/favicon_thomasliddledba_com.png</url>
+    </image>
+    <item>
+      <title>10 Minute DBA - Now Available</title>
+      <pubDate>Mon, 30 Jan 2017 08:00:00 -0500</pubDate>
+      <link>http://www.thomasliddledba.com/10-minute-dba.html</link>
+      <author>tliddle30@gmail.com</author>
+      <description><![CDATA[The 10 Minute DBA is a playlist for SQL Server Enthusiasts and Newbies to SQL Server. Weekly videos are posted for Beginners and Advanced users with topics ranging from Design to Demonstration of Features.]]></description>
+    </item>
+    <item>
+      <title>Changing Linked Server Passwords</title>
+      <pubDate>Thu, 26 Jan 2017 08:00:00 -0500</pubDate>
+      <link>http://www.sqlservercentral.com/articles/Linked+Server/151466/</link>
+      <author>tliddle30@gmail.com</author>
+      <description><![CDATA[A linked server in SQL Server allows users to query remote heterogenous servers.  These servers can be database servers like SQL Server, Oracle, MySQL, etc.  At times, administrators of those servers might have to change the password on a mapped login or it could be changed without your knowledge.  You will see the error message below when this occurs.]]></description>
+    </item>
+    <item>
+      <title>Dynamic Data Masking</title>
+      <pubDate>Thu, 19 Jan 2017 08:00:00 -0500</pubDate>
+      <link>http://www.thomasliddledba.com/articles/2016/12/sql-server-dynamic-data-masking-ddm.html</link>
+      <description><![CDATA[This video demonstration will educate you on how to implement Dynamic Data Masking and how to ALTER it.]]></description>
+    </item>
+  </channel>
+</rss>

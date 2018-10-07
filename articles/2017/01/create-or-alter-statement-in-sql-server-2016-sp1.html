@@ -1,0 +1,111 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<title>CREATE OR ALTER statement in SQL Server 2016 SP1 - thomasliddledba.com</title>
+<meta name="keywords" content="thomasliddledba create or alter,thomasliddledba.com create-or-alter" />
+<meta name="description" content="Demonstration on how to use CREATE OR ALTER feature in SQL Server 2016 SP1" />
+<link href="../../../default.css" rel="stylesheet" type="text/css" media="screen" />
+<link rel="shortcut icon" href="../../../images/favicon_thomasliddledba_com.png" type="image/png" />
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-89244115-1', 'auto');
+  ga('send', 'pageview');
+
+</script>
+</head>
+<body>
+<!-- start header -->
+<div id="logo">
+	<h1><a href="../../../index.html">thomasliddledba.com</a></h1>
+	<p>Your MSSQL Database Platform Resource</p>
+</div>
+<div id="menu">
+	<ul>
+		<li><a href="../../../index.html">Home</a></li>
+		<li><a href="../../../articles.html">Articles</a></li>
+		<li><a href="../../../videos.html">Videos</a></li>
+		<li><a href="../../../10-minute-dba.html">10 Minute DBA</a></li>
+	</ul>
+</div>
+<!-- end header -->
+<!-- start page -->
+<div id="page">
+	<div id="page-bg">
+		<div id="latest-post"> <img src="../../../images/websiteimg.png" alt="" width="140" height="165" class="right" />
+			<h1>CREATE OR ALTER statement in SQL Server 2016 SP1</h1>
+			<p>
+Microsoft is taking steps to minimize the amount of code that has to be written to get a job done.  With that said, they finally introduced with SP1 for SQL Server 2016 the CREATE OR ALTER statement.
+Previously, if you wanted to script out an object such as a stored procedure you had to check if it exists.  This new statement eliminates that.
+		</div>
+		<!-- start content -->
+		<div id="content"><div class="inner_copy"></div>
+			<div class="post">
+				<h2 class="title">Step 1 - Example of the OLD WAY</h2>
+				<div class="entry">
+<table border=0 id="codetable">
+<tr>
+<td>
+					<pre>
+USE [MASTER]
+GO
+IF EXISTS (SELECT * FROM SYS.OBJECTS WHERE NAME = 'MYPROC' 
+		AND TYPE = 'P')
+DROP PROCEDURE DBO.MYPROC
+GO
+CREATE PROCEDURE DBO.MYPROC
+AS
+    BEGIN
+        PRINT 'HELLO FROM THOMAS LIDDLE'
+    END
+GO
+EXEC DBO.MYPROC
+					<pre>
+</tr></td></table>
+
+					<br />
+					</p>
+<h2 class="title">Step 2 - Example of the New Way</h2>
+In this step, we are going to insert some sample data.  The sample data is the current employees elections for the year 2017.  Employee number 2, only has benefits for himself in 2017.
+<table border=0 id="codetable">
+<tr>
+<td>
+					<pre>
+USE [MASTER]
+GO
+-- CHANGED THE CREATE STATEMENT IN STEP 1
+-- TO CREATE OR ALTER IN THIS STEP.
+
+<STRONG>CREATE OR ALTER</STRONG> PROCEDURE DBO.MYPROC
+AS
+BEGIN
+    PRINT 'HELLO FROM WWW.THOMASLIDDLEDBA.COM'
+END
+GO
+EXEC DBO.MYPROC
+					<pre>
+</tr></td></table>
+
+					</p>
+				</div>
+			</div>
+		</div>
+		<!-- end content -->
+		<!-- start sidebar -->
+		<div id="sidebar">
+			<!-- Advertisment -->
+		</div>
+		<!-- end sidebar -->
+		<div style="clear:both;">&nbsp;</div>
+	</div>
+</div>
+<!-- end page -->
+<div id="footer">
+	<div class="fleft"><p>Copyright - All rights reserved.  thomasliddledba.com</p></div>
+</div>
+</body>
+</html>

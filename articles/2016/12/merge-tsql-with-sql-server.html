@@ -1,0 +1,281 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" prefix="og: http://ogp.me/ns#">
+<head>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<title>MERGE TSQL with SQL Server - thomasliddledba.com</title>
+<meta name="keywords" content="thomasliddledba MERGE,thomasliddledba.com MERGE" />
+<meta name="description" content="Demonstration on how to use MERGE statement in SQL Server" />
+  <meta property="og:title" content="MERGE TSQL statement with SQL Server" />
+  <meta property="og:description" content="This demostration will educate you on The MERGE statement and perform INSERT, DELETE, and UPDATE operations on a target table from a source table in one statement." />
+  <meta property="og:url" content="http://www.thomasliddledba.com/articles/MERGE%20TSQL%20with%20SQL%20Server.html" />
+  <meta property="og:image" content="http://www.thomasliddledba.com/images/merge_cells_icon-min.png" />
+<link href="../../../default.css" rel="stylesheet" type="text/css" media="screen" />
+<link rel="shortcut icon" href="../../../images/favicon_thomasliddledba_com.png" type="image/png" />
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-89244115-1', 'auto');
+  ga('send', 'pageview');
+
+</script>
+</head>
+<body>
+<!-- start header -->
+<div id="logo">
+	<h1><a href="../../../index.html">thomasliddledba.com</a></h1>
+	<p>Your MSSQL Database Platform Resource</p>
+</div>
+<div id="menu">
+	<ul>
+	<ul>
+		<li><a href="../../../index.html">Home</a></li>
+		<li><a href="../../../articles.html">Articles</a></li>
+		<li><a href="../../../videos.html">Videos</a></li>
+		<li><a href="../../../10-minute-dba.html">10 Minute DBA</a></li>
+	</ul>
+	</ul>
+</div>
+<!-- end header -->
+<!-- start page -->
+<div id="page">
+	<div id="page-bg">
+		<div id="latest-post"> <img src="../../../images/websiteimg.png" alt="" width="140" height="165" class="right" />
+			<h1>MERGE TSQL with SQL Server </h1>
+<script src="//platform.linkedin.com/in.js" type="text/javascript"> lang: en_US</script>
+<script type="IN/Share" data-counter="right"></script>
+			<p>
+The MERGE statement and perform INSERT, DELETE, and UPDATE operations on a target table from a source table within one statement. 
+<p />
+<strong>Remarks</strong>
+<lu>
+	<li>MERGE requires a semicolon at the end of the statement.  You will receive and error if a semicolon is not there.</li>
+	<li>MERGE ignores the IGNORE_DUP_KEY setting on unique indexes on a target table.</li>
+</lu>
+
+
+			</p>
+		</div>
+		<!-- start content -->
+		<div id="contentnosidebar"><div class="inner_copy"></div>
+			<div class="post">
+<strong>Demo</strong>
+<hr>
+				<h2 class="title">Step 1 - Create Target Table (tbl_Employee)</h2>
+The code below will create the database, AdventureWorksEmployee, and create the target table tbl_Employee.
+				<div class="entry">
+					<pre id="codediv">
+CREATE DATABASE [ADVENTUREWORKSEMPLOYEE]
+GO
+USE [AdventureWorksEmployee]
+GO
+IF  EXISTS (SELECT * FROM sys.objects 
+		WHERE object_id = OBJECT_ID(N'[dbo].[tbl_Employee]') 
+		AND type in (N'U'))
+DROP TABLE [dbo].[tbl_Employee]
+GO
+USE [AdventureWorksEmployee]
+GO
+CREATE TABLE [dbo].[tbl_Employee](
+ [EmployeeID] [bigint] IDENTITY(1,1) NOT NULL,
+ [FirstName] [varchar](128) NULL,
+ [LastName] [varchar](128) NULL,
+ [Location] [varchar](128) NULL,
+ [Phone] [varchar](128) NULL,
+ CONSTRAINT [PK_tbl_Employee] PRIMARY KEY CLUSTERED 
+(
+ [EmployeeID] ASC
+)WITH (PAD_INDEX  = OFF
+		, STATISTICS_NORECOMPUTE  = OFF
+		, IGNORE_DUP_KEY = OFF
+		, ALLOW_ROW_LOCKS  = ON
+		, ALLOW_PAGE_LOCKS  = ON) ON [PRIMARY]
+) ON [PRIMARY]
+GO
+SET ANSI_PADDING OFF
+GO
+					</pre>
+
+					<br />
+					</p>
+<h2 class="title">Step 2 - Create Source Table (tbl_Employee_Staging</h2>
+The next code example will create the staging table for our updated, new, and removed employees.  In a real-world example this may be from a nightly extract of your HR data into this table.
+					<pre id="codediv">
+USE [AdventureWorksEmployee]
+GO
+IF  EXISTS (SELECT * FROM sys.objects 
+		WHERE object_id = OBJECT_ID(N'[dbo].[tbl_Employee_Staging]') 
+		AND type in (N'U'))
+DROP TABLE [dbo].[tbl_Employee_Staging]
+GO
+USE [AdventureWorksEmployee]
+GO
+CREATE TABLE [dbo].[tbl_Employee_Staging](
+ [FirstName] [varchar](128) NULL,
+ [LastName] [varchar](128) NULL,
+ [Location] [varchar](128) NULL,
+ [Phone] [varchar](128) NULL
+) ON [PRIMARY]
+GO
+					</pre>
+
+
+<h2 class="title">Step 3 - Insert Data into the Source and Target Table (tbl_Employee) & (tbl_Employee_Staging)</h2>
+Next, we will enter some sample data into our tbl_Employee table and tbl_Employee_Staging table.  The data in our tbl_Employee table is our existing data and the data in our tbl_Employee_Staging table is the data we want to add insert and delete.  The row we want to insert into our tbl_Employee table is "Thomas","Liddle","DE","555-999-1234".
+<pre id="codediv">
+USE [AdventureWorksEmployee]
+GO 
+TRUNCATE TABLE [dbo].[tbl_Employee]
+GO
+TRUNCATE TABLE [dbo].[tbl_Employee_Staging]
+GO
+INSERT INTO [AdventureWorksEmployee].[dbo].[tbl_Employee]
+            ([FirstName]
+            ,[LastName]
+            ,[Location]
+            ,[Phone])
+      VALUES
+            ('John',
+            'Doe',
+            'RI',
+            '555-123-4567')
+ GO
+ INSERT INTO [AdventureWorksEmployee].[dbo].[tbl_Employee]
+            ([FirstName]
+            ,[LastName]
+            ,[Location]
+            ,[Phone])
+      VALUES
+            ('Jane',
+            'Doe',
+            'WA',
+            '555-444-7890')
+ GO
+ /*
+ THIS IS OUR NEW ROW
+ */
+ INSERT INTO [AdventureWorksEmployee].[dbo].[tbl_Employee_Staging]
+            ([FirstName]
+            ,[LastName]
+            ,[Location]
+            ,[Phone])
+      VALUES
+            ('Thomas'
+            ,'Liddle'
+            ,'DE'
+            ,'555-999-1234')
+ /*
+ END
+ */
+GO 
+ 
+INSERT INTO [AdventureWorksEmployee].[dbo].[tbl_Employee_Staging]
+            ([FirstName]
+            ,[LastName]
+            ,[Location]
+            ,[Phone])
+      VALUES
+            ('John',
+            'Doe',
+            'RI',
+            '555-123-4567')
+ GO
+ INSERT INTO [AdventureWorksEmployee].[dbo].[tbl_Employee_Staging]
+            ([FirstName]
+            ,[LastName]
+            ,[Location]
+            ,[Phone])
+      VALUES
+            ('Jane',
+            'Doe',
+            'WA',
+            '555-444-7890')
+ GO
+</pre>
+
+<h2 class="title">Step 4 - Run the MERGE statement and insert data in tbl_Employee_Stage to tbl_Employee</h2>
+The MERGE statement below will look for differences in the tbl_Employee table and the tbl_Employee_Staging table using the FirstName and LastName as a key.  The #tbl_EmployeeChanges table allows you to view or audit the changes performed with the MERGE statement.  This is possable with the OUTPUT statement.
+<pre id="codediv">
+USE AdventureWorksEmployee
+GO
+SELECT 'tbl_Employee_BEFORE',* FROM tbl_Employee 
+GO
+
+CREATE TABLE #tbl_EmployeeChanges
+(
+ [FirstNameDeleted] varchar(128)
+ ,[LastNameDeleted] varchar(128)
+ ,[LocationDeleted] varchar(128)
+ ,[PhoneDeleted] varchar(128)
+ ,[Action] varchar(128)
+ ,[FirstNameInserted] varchar(128)
+ ,[LastNameInserted] varchar(128)
+ ,[LocationInserted] varchar(128)
+ ,[PhoneInserted] varchar(128)
+)
+ 
+MERGE dbo.tbl_Employee AS target
+    USING 
+  (SELECT [FirstName],[LastName],[Location],[Phone] FROM dbo.tbl_Employee_Staging) AS source 
+   ([FirstName],[LastName],[Location],[Phone])
+    ON (
+    target.[FirstName] = source.[FirstName]
+    AND target.[LastName] = source.[LastName])
+    WHEN MATCHED THEN 
+        UPDATE 
+   SET 
+    [FirstName] = source.[FirstName]
+    ,[LastName] = source.[LastName]
+    ,[Location] = source.[Location]
+    ,[Phone] = source.[Phone]
+ WHEN NOT MATCHED THEN 
+     INSERT ([FirstName],[LastName],[Location],[Phone])
+     VALUES (source.[FirstName]
+    ,source.[LastName]
+    ,source.[Location]
+    ,source.[Phone])
+ WHEN NOT MATCHED BY SOURCE THEN 
+  DELETE
+
+     OUTPUT 
+   deleted.[FirstName]
+   ,deleted.[LastName]
+   ,deleted.[Location]
+   ,deleted.[Phone] 
+   ,$action
+   ,inserted.[FirstName]
+   ,inserted.[LastName]
+   ,inserted.[Location]
+   ,inserted.[Phone] 
+     INTO #tbl_EmployeeChanges;
+GO
+SELECT * FROM #tbl_EmployeeChanges
+GO
+drop table #tbl_EmployeeChanges
+GO
+SELECT 'tbl_Employee_AFTER',* FROM tbl_Employee
+</pre>
+
+
+					<br />
+					</p>
+				</div>
+			</div>
+		</div>
+		<!-- end content -->
+		<!-- start sidebar -->
+		<div id="sidebar">
+			<!-- Advertisment -->
+		</div>
+		<!-- end sidebar -->
+		<div style="clear:both;">&nbsp;</div>
+	</div>
+</div>
+<!-- end page -->
+<div id="footer">
+	<div class="fleft"><p>Copyright - All rights reserved.  thomasliddledba.com</p></div>
+</div>
+</body>
+</html>

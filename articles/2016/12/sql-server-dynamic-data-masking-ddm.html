@@ -1,0 +1,296 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<title>SQL Server Dynamic Data Masking DDM - thomasliddledba.com</title>
+<meta name="keywords" content="thomasliddledba ddm,thomasliddledba dynamic data masking" />
+<meta name="description" content="Demonstration on how to use SQL Server Dynamic Data Masking in SQL Server 2016" />
+<link href="../../../default.css" rel="stylesheet" type="text/css" media="screen" />
+<link rel="shortcut icon" href=".../../../images/favicon_thomasliddledba_com.png" type="image/png" />
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-89244115-1', 'auto');
+  ga('send', 'pageview');
+
+</script>
+</head>
+<body>
+<!-- start header -->
+<div id="logo">
+	<h1><a href="../../../index.html">thomasliddledba.com</a></h1>
+	<p>Your MSSQL Database Platform Resource</p>
+</div>
+<div id="menu">
+	<ul>
+		<li><a href="../../../index.html">Home</a></li>
+		<li><a href="../../../articles.html">Articles</a></li>
+		<li><a href="../../../videos.html">Videos</a></li>
+		<li><a href="../../../10-minute-dba.html">10 Minute DBA</a></li>
+	</ul>
+</div>
+<!-- end header -->
+<!-- start page -->
+<div id="page">
+	<div id="page-bg">
+		<div id="latest-post"> <img src="../../../images/websiteimg.png" alt="" width="140" height="165" class="right" />
+			<h1>SQL Server Dynamic Data Masking DDM</h1>
+			<p>
+<h2 class="title">Watch the Video</h2>
+You can watch the short video on Dynamic Data Masking on Youtube.  <a href="https://youtu.be/Ux_qZnQP52s">Watch Here</a>
+<p />
+<hr />
+<p />
+Today, I'm going to walk you through a new feature in SQL Server 2016 called Dynamic Data Masking (DDM).  You can read more about it on MSDN for DDM.
+What is DDM?
+<P />
+Dynamic Data Masking limits the exposure to sensitive data to users that should not see the data being presented.  DDM is used in conjunctions with other features in SQL Server such as SQL Auditing and Encryption (TDE and row-level encryption) to provide a completely secure database platform.
+<P />
+Database can be masked in different ways, either Full Masking or Partial Masking and there are functions builtin to provide ease of use like 'email()'.  
+<p />
+Keep in mind that although a user may not see all the data, updates to the data (if permission applies to the user) will still be committed.
+<p />
+<strong>Permissions</strong><br />
+Users with SELECT permission on a table can view the table data. Columns that are defined as masked, will display the masked data. Grant the UNMASK permission to a user to enable them to retrieve unmasked data from the columns for which masking is defined.
+<p />
+<Strong>Use Cases</strong>
+<ol>
+<li>Need to mask SSN in a column</li>
+<li>Need to mask email address in a column</li>
+<li>Need to mask phone number in a column</li>
+<li>Need to mask refresh copies of Production database in lower environments</li>
+<li>The case for masking data can be endless if you have a over protective Information Security Officer :)</li>
+</ol>
+<p />
+<strong>Demo</strong>
+<hr>
+Our demo today will start with a table in our HR database called employee.  The demo will be a small sub-set of data for you to get the general idea on how to use DDM.
+			</p>
+		</div>
+		<!-- start content -->
+		<div id="content"><div class="inner_copy"></div>
+			<div class="post">
+				<h2 class="title">Step 1 - Create the employee table with data and mask the email address column</h2>
+				<div class="entry">
+<table border=0 id="codetable">
+<tr>
+<td>
+					<pre>
+CREATE TABLE DBO.EMPLOYEE(
+    EMPLOYEEID INT IDENTITY PRIMARY KEY,
+    FIRSTNAME VARCHAR(100),
+    LASTNAME VARCHAR(100),
+    SSN VARCHAR(20),
+    PERSONALEMAIL VARCHAR(100) 
+	MASKED WITH (FUNCTION='EMAIL()') NULL);
+					<pre>
+</tr></td></table>
+
+					<br />
+					</p>
+<h2 class="title">Step 2.  Insert Sample Data into dbo.employee table</h2>
+<table border=0 id="codetable">
+<tr>
+<td>
+					<pre>
+INSERT INTO DBO.EMPLOYEE
+    SELECT 'JOHN','DOE','123-45-6789','J.DOE@MYCORP.COM'
+GO
+INSERT INTO DBO.EMPLOYEE
+    SELECT 'RALPH','SMITH','123-45-6789','R.SMITH@MYCORP.COM'
+GO
+					<pre>
+</tr></td></table>
+
+
+<h2 class="title">Step 3.  Create a HRRep User with permission to select from the dbo.employee table</h2>
+
+<table border=0 id="codetable">
+<tr>
+<td>
+					<pre>
+CREATE USER [HRREP] WITHOUT LOGIN
+GO
+GRANT SELECT ON [DBO].[EMPLOYEE] TO [HRREP]
+					<pre>
+</tr></td></table>
+
+<h2 class="title">Step 4.  Select data from dbo.employee as hrrep and as dbo</h2>
+
+<table border=0 id="codetable">
+<tr>
+<td>
+					<pre>
+SELECT *,USER_NAME() [USERNAME] FROM DBO.EMPLOYEE; 
+GO 
+EXECUTE AS USER = 'HRREP' 
+SELECT *,USER_NAME() [USERNAME] FROM DBO.EMPLOYEE 
+REVERT;
+					<pre>
+</tr></td></table>
+<table border=0>
+<tr>
+<td><img src="../../../images/DDMStep4.png" width="550" height="220"></td>
+</tr></table>
+
+
+<h2 class="title">Step 5.  Alter the existing column for SSN data to be masked and only display the last 4 of SSN</h2>
+
+<table border=0 id="codetable">
+<tr>
+<td>
+					<pre>
+ALTER TABLE DBO.EMPLOYEE ALTER COLUMN SSN 
+	ADD MASKED WITH (FUNCTION='PARTIAL(0,"XXX-XX-",4)')
+					<pre>
+</tr></td></table>
+
+<h2 class="title">Step 6.  Run our code in Step 4 again</h2>
+
+<table border=0 id="codetable">
+<tr>
+<td>
+					<pre>
+SELECT *, USER_NAME() [USERNAME] FROM DBO.EMPLOYEE;
+GO
+EXECUTE AS USER = 'HRREP'
+SELECT *,USER_NAME() [USERNAME] FROM DBO.EMPLOYEE
+REVERT
+					<pre>
+</tr></td></table>
+<table border=0>
+<tr>
+<td><img src="../../../images/DDMStep6.png" width="550" height="220"></td>
+</tr></table>
+
+
+<h2 class="title">Step 5.  Alter the existing column for SSN data to be masked and only display the last 4 of SSN</h2>
+
+<table border=0 id="codetable">
+<tr>
+<td>
+					<pre>
+ALTER TABLE DBO.EMPLOYEE ALTER COLUMN SSN 
+	ADD MASKED WITH (FUNCTION='PARTIAL(0,"XXX-XX-",4)')
+					<pre>
+</tr></td></table>
+
+<h2 class="title">Step 6.  Run our code in Step 4 again</h2>
+
+<table border=0 id="codetable">
+<tr>
+<td>
+					<pre>
+SELECT *, USER_NAME() [USERNAME] FROM DBO.EMPLOYEE;
+GO
+EXECUTE AS USER = 'HRREP'
+SELECT *,USER_NAME() [USERNAME] FROM DBO.EMPLOYEE
+REVERT
+					<pre>
+</tr></td></table>
+<table border=0>
+<tr>
+<td><img src="../../../images/DDMStep6.png" width="550" height="220"></td>
+</tr></table>
+
+<h2 class="title">Step 7.  Drop masked data on personalemail while keeping ssn masked in dbo.employee</h2>
+
+<table border=0 id="codetable">
+<tr>
+<td>
+					<pre>
+ALTER TABLE DBO.EMPLOYEE
+ALTER COLUMN PERSONALEMAIL DROP MASKED
+					<pre>
+</tr></td></table>
+<h2 class="title">Step 8.  Run Code in Step 4 to verify</h2>
+
+<table border=0 id="codetable">
+<tr>
+<td>
+					<pre>
+SELECT *, USER_NAME() [USERNAME] FROM DBO.EMPLOYEE;
+GO
+EXECUTE AS USER = 'HRREP'
+SELECT *,USER_NAME() [USERNAME] FROM DBO.EMPLOYEE
+REVERT
+					<pre>
+</tr></td></table>
+<table border=0>
+<tr>
+<td><img src="../../../images/DDMStep8.png" width="550" height="220"></td>
+</tr></table>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+					<br />
+					</p>
+				</div>
+			</div>
+		</div>
+		<!-- end content -->
+		<!-- start sidebar -->
+		<div id="sidebar">
+			<!-- Advertisment -->
+		</div>
+		<!-- end sidebar -->
+		<div style="clear:both;">&nbsp;</div>
+	</div>
+</div>
+<!-- end page -->
+<div id="footer">
+	<div class="fleft"><p>Copyright - All rights reserved.  thomasliddledba.com</p></div>
+</div>
+</body>
+</html>

@@ -1,0 +1,470 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" prefix="og: http://ogp.me/ns#">
+<head>
+<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+<title>In-Memory OLTP Part 1 - thomasliddledba.com</title>
+<meta name="keywords" content="thomasliddledba in-memory oltp,thomasliddledba.com oltp databases" />
+<meta name="description" content="Demonstration on how to use In-Memory oltp with SQL Server" />
+  <meta property="og:title" content="In-Memory OLTP Part 1 - thomasliddledba.com" />
+  <meta property="og:description" content="Part 1 of a demonstration on how to use In-Memory OLTP with SQL Server" />
+  <meta property="og:url" content="http://www.thomasliddledba.com/articles/2017/01/in-memory-oltp-part-1.html" />
+  <meta property="og:image" content="http://www.thomasliddledba.com/images/in-memory-db-min.png" />
+<link href="../../../default.css" rel="stylesheet" type="text/css" media="screen" />
+<link rel="shortcut icon" href="../../../images/favicon_thomasliddledba_com.png" type="image/png" />
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-89244115-1', 'auto');
+  ga('send', 'pageview');
+
+</script>
+
+</head>
+<body>
+<!-- start header -->
+<div id="logo">
+	<h1><a href="../../../index.html">thomasliddledba.com</a></h1>
+	<p>Your MSSQL Database Platform Resource</p>
+</div>
+<div id="menu">
+	<ul>
+	<ul>
+		<li><a href="../../../index.html">Home</a></li>
+		<li><a href="../../../articles.html">Articles</a></li>
+		<li><a href="../../../videos.html">Videos</a></li>
+		<li><a href="../../../10-minute-dba.html">10 Minute DBA</a></li>
+	</ul>
+	</ul>
+</div>
+<!-- end header -->
+<!-- start page -->
+<div id="page">
+	<div id="page-bg">
+		<div id="latest-post"> <img src="../../../images/websiteimg.png" alt="" width="140" height="165" class="right" />
+			<h1>In-Memory OLTP - Part 1</h1>
+<script src="//platform.linkedin.com/in.js" type="text/javascript"> lang: en_US</script>
+<script type="IN/Share" data-counter="right"></script>
+			<p>
+<p />
+<h2 class="title">Watch the Video</h2>
+You can watch the short video on In-Memory OLTP on Youtube.  <a href="https://youtu.be/alETskvMO6I">Watch Here</a>
+<p />
+<hr />
+<p />
+<h2 class="title">Overview</h2>
+Introduced in SQL Server 2014 and greatly enhanced with SQL Server 2016 is In-Memory OLTP.  In-Memory OLTP is a memory optimized database engine
+intergraded with SQL Server.  
+<p />
+It's designed to improve performance of data workloads and transaction processing for high data ingestion, contention read/write, and low latency
+workloads.  High data ingestion workloads are, for example, ETL (Extract, Transform, Load) processes.  Read/Write workloads are workloads with enormous read
+and write requirements.  Lastly, low latency workloads are applications that require specific duration times such as banking transactions.
+<p />
+In-Memory OLTP is available in the following SQL Server Products.
+<ul>
+<li>SQL Server 2014</li>
+<li>SQL Server 2016</li>
+<li>SQL Server vNext CTP1.1</li>
+<li>Azure SQL Database with Premium</li>
+</ul>
+<h2 class="title">Memory-optimized tables</h2>
+Memory-optimized tables store all their data in memory with no need to put anything in cache from disk.  This mechanism eliminates locks and latches and provides
+great performance.
+<p />
+Things to note:
+<ul>
+	<li>Entire table is stored in memory</li>
+	<li>Can store just schema (non-durable data) or data and schema (durable)</li>
+	<li>A second copy is maintained on disk if durable is chosen</li>
+	<li>Data in the table is read and written to memory</li>
+	<li>Default is durable (SCHEMA_AND_DATA)</li>
+	<li>Row versioning DOES NOT use tempdb</li>
+</ul>
+<p />
+<h2 class="title">Durable vs Non-Durable</h2>
+In memory-optimized tables there are two options that you can choose from when creating a table.  The table below is a point 
+of reference to understanding the difference between Durable and Non-Durable Memory-Optimized Tables
+<br />
+<table border=1>
+<tr>
+<td>Type</td>
+<td>Description</td>
+<td>Decision Point</td>
+<td>Clause</td>
+</tr>
+<tr>
+<td>Durable</td>
+<td>Transactions are written to memory and also to the transaction log</td>
+<td>
+<ul>
+<li>Need to recover data on server failure or failover?</li>
+</ul>
+</td>
+<td>DURABILITY=SCHEMA_AND_DATA</td>
+</tr>
+<tr>
+<td>Non-Durable</td>
+<td>Transactions are written to memory but not written to the transaction log</td>
+<td>
+<ul>
+<li>Data is stored in another source and recovery is not needed?  (ex. ETL process)</li>
+<li>Want to eliminate all I/O operations?</li>
+</ul>
+</td>
+<td>DURABILITY=SCHEMA_ONLY</td>
+</tr>
+</table>
+<p />
+<h2 class="title">Querying In-Memory Optimized Tables</h2>
+Microsoft recommends that the best method to benefit from memory-optimized tables is to use Natively-complied stored procedures.
+  These stored procedures executed without the need for compilation or interpretation because this is done during compile time and not
+run time.  Below is an example of a natively complied code on the 'dbo.Employee' table in the 'employeedb' database.
+<br>
+<table border=0 id="codetable">
+<tr>
+<td>
+<pre>
+USE [employeedb]
+GO
+-- SQL Server 2016 SP1 supports CREATE OR ALTER statements
+-- Replace it if you are SQL Server 2016 and below with 'CREATE' or 'ALTER'
+CREATE OR ALTER PROCEDURE [dbo].[usp_UpdateEmployeeSalary]
+	WITH NATIVE_COMPILATION,
+	SCHEMABINDING,
+	EXECUTE AS OWNER
+AS
+BEGIN ATOMIC WITH ( TRANSACTION ISOLATION LEVEL=SNAPSHOT,LANGUAGE = N'us_english')
+	UPDATE [dbo].[Employee]
+		SET Salary = Salary + (Salary * 0.05)
+END;
+</pre>
+</td>
+</tr>
+</table>
+<p />
+<h2 class="title">What's New in SQL Server 2016 and In-Memory OLTP</h2>
+There were some limitation with In-Memory OLTP when first introduced in SQL Server 2014.  In SQL Server 2016,
+Microsoft invested some time in eliminated some of the limitations.  The list below are changes that were made
+to In-Memory OLTP in SQL Server 2016.
+<ul>
+<li>Maximum Memory changed from 256 GB to 2TB recommended</li>
+<li>All collations are now supported</li>
+<li>ALTER a memory-optimized table after its created is supported</li>
+<li>Parallel execution plans on memory optimized tables</li>
+<li>TDE - Transparent Data Encryption</li>
+<li>(max) Data Type</li>
+<li>Indexes with NULLable columns</li>
+<li>DML Triggers</li>
+</ul>
+
+
+
+			</p>
+		</div>
+		<!-- start content -->
+		<div id="contentnosidebar"><div class="inner_copy"></div>
+			<div class="post">
+<strong>Demo</strong>
+<hr>
+Part 1 of our demonstration will be creating an In-Memory OLTP database, creating a memory-optimized table, and inserting data into our memory-optimized table.
+We will also explore performance improvements with natively-complied code.
+<p />
+Part 2, which will be in another post, is a demonstration that will explore altering memory-optimized tables and indexing on memory-optimized tables.
+
+				<h2 class="title">Step 1 - Create Memory OLTP Database</h2>
+In this step we will create a database that will contain memory-optimized tables.  It will be created with one MEMORY_OPTIMIZED_DATA filegroup.
+The filegroup stores data and delta file pairs for SQL Server to recover in a failure.
+<p />
+				<div class="entry">
+<table border=0 id="codetable">
+<tr>
+<td>
+					<pre>
+USE [master]
+GO
+CREATE DATABASE [memexampledb]
+ CONTAINMENT = NONE
+ ON  PRIMARY 
+( NAME = N'memexampledb', FILENAME = N'C:\SQLDB\memexampledb.mdf'), 
+ FILEGROUP [FG_MEMOP_EXAMPLE] CONTAINS MEMORY_OPTIMIZED_DATA  DEFAULT
+( NAME = N'memexampledb_MEMOP_Data', FILENAME = N'C:\SQLDB\memexampledb_MEMOP_Data')
+ LOG ON 
+( NAME = N'memexampledb_log', FILENAME = N'C:\SQLDB\memexampledb_log.ldf')
+GO
+					<pre>
+</tr></td></table>
+
+					<br />
+					</p>
+<h2 class="title">Step 2 - Create Memory-optimized Table</h2>
+In this step, we will create two tables.  The first table, tbl_disktable, will be created on disk.  Our second table, tbl_inmemory, will be created
+on the memory filegroup we created when we created our database.
+<p />
+Notice in our TSQL statement for the tbl_inmemory table there is an additional clause passed.  The <strong>WITH (MEMORY_OPTIMIZED=ON)</strong> indicates
+that the table be created in the filegroup we created.
+<br />
+The second option you will notice is the <strong>DURABILITY=SCHEMA_AND_DATA</strong>.  This indicates that the table will be durable.
+<p />
+<table border=0 id="codetable">
+<tr>
+<td>
+					<pre>
+USE [memexampledb]
+GO
+-- Table on Disk
+CREATE TABLE tbl_disktable ([id] [int] NOT NULL primary key nonclustered,
+                        [name] [varchar](50) NULL,
+                        [salary] [int] NULL,
+                        [indicator] [int] NULL);
+
+-- Table in Memory                     
+CREATE TABLE tbl_inmemory ([id] [int] NOT NULL primary key nonclustered,
+                        [name] [varchar](50) NULL,
+                        [salary] [int] NULL,
+                        [indicator] [int] NULL) WITH (
+				MEMORY_OPTIMIZED=ON
+				, DURABILITY=SCHEMA_AND_DATA);
+					<pre>
+</tr></td></table>
+
+
+
+<h2 class="title">Step 3 - Insert Data</h2>
+In this step, we will insert data into both tables.  This is sample data for the demonstration.
+<br />
+Notice the DELETE statements in the code.  In <strong>SQL Server 2014 and in SQL Server 2016</strong> you can not
+TRUNCATE a memory optimized table.  To ensure no data exists in the table for this demonstration
+or if you want <strong>to delete all the data in a table (ex an ETL process) you must use DELETE instead
+of TRUNCATE</strong>.
+<p />
+<table border=0 id="codetable">
+<tr>
+<td>
+					<pre>
+use [memexampledb]
+go
+truncate table tbl_disktable
+go
+-- Can not truncate a Memory Optimized Table
+delete from tbl_inmemory
+go
+declare @pdata int=1
+while @pdata <= 5000
+begin  
+   insert into tbl_disktable(id,name,salary,indicator) 
+       values (@pdata,'thomasliddledba-' + cast(@pdata as varchar(1000)),(@pdata - 1)
+			,(@pdata % 6))
+   select @pdata=@pdata+1
+end
+go
+declare @pdata int=1
+while @pdata <= 5000
+begin  
+   insert into tbl_inmemory(id,name,salary,indicator) 
+       values (@pdata,'thomasliddledba-' + cast(@pdata as varchar(1000)),(@pdata - .10)
+			,(@pdata % 6))
+   select @pdata=@pdata+1
+end
+go					<pre>
+</tr></td></table>
+
+<h2 class="title">Step 4 - Create a Natively-Complied Stored Procedure</h2>
+For our demonstration we will need to create a Natively-Complied stored procedure to test the performance between
+disk based table and memory-optimized table.
+<br />
+This complied stored procedure will be a SELECT statement for row id 2500.
+<table border=0 id="codetable">
+<tr>
+<td>
+					<pre>
+-- If you have SQL Server 2016 SP 1 this code will execute successfully
+-- If you do not have SQL Server 2016 SP1 replace the CREATE OR ALTER with CREATE
+CREATE OR ALTER PROCEDURE [dbo].[usp_tbl_inmemory_compile]
+	WITH NATIVE_COMPILATION,
+	SCHEMABINDING,
+	EXECUTE AS OWNER
+AS
+BEGIN ATOMIC WITH ( TRANSACTION ISOLATION LEVEL=SNAPSHOT,LANGUAGE = N'us_english')
+	SELECT 
+		id
+		,name
+		,salary
+		,indicator
+	FROM dbo.tbl_inmemory WHERE [id]=2500
+END;	
+GO
+EXEC dbo.usp_tbl_inmemory_compile					
+<pre>
+</tr></td></table>
+
+<h2 class="title">Step 5 - Testing Performance</h2>
+In the last step, we will start a profiler trace and execute the following code to test performance
+of our memory-optimized table vs our disk based table.
+You will need to start a profiler trace with the following events:
+<ul>
+<li>Stored Procedure-RPC:Completed</li>
+<li>TSQL-SQL:BatchCompleted</li>
+</ul>
+You will need to choose the following columns
+<ul>
+<li>TextData</li>
+<li>CPU</li>
+<li>Reads</li>
+<li>Writes</li>
+<li>Duration</li>
+<li>SPID</li>
+<li>StartTime</li>
+<li>EndTime</li>
+</ul>
+
+<table border=0>
+<tr>
+<td><img src="../../../images/in-memory-table-profiler-min.png" alt="Profiler Screenshot"></td>
+</tr>
+</table>
+With our Profiler trace running, we can execute the code and analyze the results.
+You will need to execute the following code with profiler running.
+<table border=0 id="codetable">
+<tr>
+<td>
+					<pre>
+use [memexampledb]
+go
+SELECT * FROM tbl_disktable WHERE [id]=2500
+GO
+exec dbo.usp_tbl_inmemory_compile
+go
+SELECT * FROM tbl_inmemory  WHERE [id]=2500
+GO				
+<pre>
+</tr></td></table>
+<p />
+After we run our code, here are the results (see screenshot below).  Our complied and inline TSQL code against our memory-optimized table used almost NO resources
+from to execute.  Our disk base table had a duration of 1ms and 3 Reads.  If this were a 
+highly transactional system, a memory-optimized table would be a perfect candidate for this.
+<table border=0>
+<tr>
+<td><img src="../../../images/in-memory-table-profiler-results-min.png" alt="Profiler Screenshot"></td>
+</tr>
+</table>
+Our next test will be with a greater data set, 2500 results.  First we will need to ALTER our complied stored procedure.
+We will modify the predicate from "=" to ">=".
+<table border=0 id="codetable">
+<tr>
+<td>
+					<pre>
+-- If you have SQL Server 2016 SP 1 this code will execute successfully
+-- If you do not have SQL Server 2016 SP1 replace the CREATE OR ALTER with CREATE
+CREATE OR ALTER PROCEDURE [dbo].[usp_tbl_inmemory_compile]
+	WITH NATIVE_COMPILATION,
+	SCHEMABINDING,
+	EXECUTE AS OWNER
+AS
+BEGIN ATOMIC WITH ( TRANSACTION ISOLATION LEVEL=SNAPSHOT,LANGUAGE = N'us_english')
+	SELECT 
+		id
+		,name
+		,salary
+		,indicator
+	FROM dbo.tbl_inmemory WHERE [id]>=2500  --This line changes from "=" to ">="
+END;	
+GO
+EXEC dbo.usp_tbl_inmemory_compile	
+<p />				
+<pre>
+</tr></td></table>
+<p />
+Now we need to change our predicates in our pervious test to "=" to ">=" and execute the test.
+<p />
+<table border=0 id="codetable">
+<tr>
+<td>
+					<pre>
+use [memexampledb]
+go
+SELECT * FROM tbl_disktable WHERE [id]>=2500 --This lines changes "=" to ">="
+GO
+exec dbo.usp_tbl_inmemory_compile
+go
+SELECT * FROM tbl_inmemory  WHERE [id]>=2500 --This lines changes "=" to ">="
+GO				
+<pre>
+</tr></td></table>
+You will see that with larger data sets our memory-optimized table performed better
+then our disk based table AND our in-line TSQL.  There could be a number of reasons why the TSQL inline statement against our memory-optimized table
+did not perform as well in this test.  Either way, the results indicated what we expected.  Memory-optimized tables
+perform much faster than disk based tables and with natively-completed stored procedures to access them.
+<p />
+<table border=0>
+<tr>
+<td><img src="../../../images/in-memory-table-profiler-results1-min.png" alt="Profiler Screenshot"></td>
+</tr>
+</table>
+<p />
+<h2 class="title">Conclusion</h2>
+In this article, we educated ourselves on what In-Memory OLTP and memory-optimized tables are, how to create and configure them, and show the performance benefits between disk based tables and memory-optimized tables.
+<p />
+Part 2 of our journey will be discussing altering memory-optimized tables and indexing on memory-optimized tables.
+Check back for more fun and Part 2.
+
+					<br />
+					</p>
+				</div>
+			</div>
+		</div>
+		<!-- end content -->
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+		<div style="clear:both;">&nbsp;</div>
+	</div>
+</div>
+<!-- end page -->
+<div id="footer">
+	<div class="fleft"><p>Copyright - All rights reserved.  thomasliddledba.com</p></div>
+</div>
+</body>
+</html>
